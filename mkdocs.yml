@@ -1,0 +1,105 @@
+site_name: PGVA Python Driver Documentation
+site_url: https://github.com/Festo-se/festo-pgva
+repo_url: https://github.com/Festo-se/festo-pgva
+
+site_dir: public
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: System preference
+
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Light mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Dark mode
+
+  logo: img/Festo_Logo_Caerul_Web.svg
+  favicon: img/method.png
+  features: navigation.sections
+    content.code.copy
+    content.tooltips
+use_directory_urls: true
+
+markdown_extensions:
+  - abbr
+  - attr_list
+  - footnotes
+  - pymdownx.highlight:
+      anchor_linenums: true
+      linenums: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: class
+          class: highlight
+          format: !!python/name:pymdownx.highlight.highlight
+
+plugins:
+  - codeinclude
+  - search
+  - include-markdown
+  - autorefs:
+      resolve_closest: true
+  - mkdocs-autoapi:
+      autoapi_dir: src
+      autoapi_add_nav_entry: true
+      autoapi_generate_api_docs: true
+      autoapi_file_patterns:
+        - "*.py"
+        #TODO: string out docstrings in rendered code
+        #TODO: Improve formatting of code in autodocs
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: #[.,src,examples]
+            - src
+            - examples
+          options:
+            show_source: true
+            # extensions:
+            # - griffe_typingdoc
+            # show_root_heading: true
+            # show_if_no_docstring: true
+            # preload_modules:
+            # - httpx
+            # - starlette
+            # inherited_members: true
+            # members_order: source
+            # separate_signature: true
+            # unwrap_annotated: true
+            # filters:
+            # - '!^_'
+            # merge_init_into_class: true
+            # docstring_section_style: spacy
+            # signature_crossrefs: true
+            # show_symbol_type_heading: true
+            # show_symbol_type_toc: true
+  #   #enabled: !ENV [ENABLE_MKDOCSTRINGS, true]
+  #   #custom_templates: templates
+  #
+
+extra_css:
+  - css/extra.css
+  - https://www.festo.com/fonts/fonts.css
+
+nav:
+  - Home: "index.md"
+  - Examples:
+      - Basic usage: "examples/examples.md"
+  - Festo Resources:
+      - "PGVA Product Page": "https://www.festo.com/us/en/p/pressure-vacuum-generator-id_PGVA/"
+      - "PGVA Data Sheet (en)": "https://www.festo.com/assets/attachment/en/661576"
+  - Issues Tracker:
+      - "Report and Issue with package": "https://github.com/Festo-se/festo-pgva/issues"
