@@ -1,5 +1,5 @@
-site_name: PGVA Python Driver Documentation
-site_url: https://github.com/Festo-se/festo-pgva
+site_name: PGVA 1 Python Driver Documentation
+site_url: https://festo-se.github.io/festo-pgva/
 repo_url: https://github.com/Festo-se/festo-pgva
 
 site_dir: public
