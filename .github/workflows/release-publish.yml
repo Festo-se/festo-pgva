@@ -10,7 +10,7 @@ name: "Publish Release"
 on:
   push:
     tags:
-      - *.*.*
+      - "*.*.*"
 
 # default: least privileged permissions across all jobs
 permissions:
