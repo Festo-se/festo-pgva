@@ -7,8 +7,9 @@
 
 `festo-pgva` is a python package which allows for driver like capabilites and usage over Festo's PGVA-1 device.
 
-Documentation can be found here:
-Examples can be found here:
+Documentation can be found here: https://festo-se.github.io/festo-pgva/
+
+Examples can be found here: https://github.com/Festo-se/festo-pgva/tree/main/examples
 
 ## Installation
 
