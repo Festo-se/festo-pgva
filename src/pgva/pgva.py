@@ -46,9 +46,12 @@ class PGVA:
                     """)
                     raise NotImplementedError("Serial communication is experimental and must be invoked directly")
                     self._backend = PGVAModbusSerial(config=self._config)
+                    Logging.logger.debug("PGVA front-end initialised with serial backend")
                 case PGVATCPConfig():
                     self._backend = PGVAModbusTCP(config=self._config)
+                    Logging.logger.debug("PGVA front-end initialised with TCP backend")
         else:
+            Logging.logger.error("Unsupported configuration type passed to PGVA: %s", type(config).__name__)
             raise TypeError("Error, configuration passed in is not supported by driver")
 
     def set_output_pressure(self, pressure: int) -> None:

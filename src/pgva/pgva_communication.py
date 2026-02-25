@@ -48,6 +48,7 @@ class PGVAModbusClient(ABC):
             self.version.append(self._get_data(commands.FIRMWARE_VERSION))
             self.version.append(self._get_data(commands.FIRMWARE_SUBVERSION))
             self.version.append(self._get_data(commands.FIRMWARE_BUILD))
+            Logging.logger.debug("Firmware version retrieved: %s", self.version)
             return self.version
         return [0, 0, 0]
 
@@ -62,6 +63,7 @@ class PGVAModbusClient(ABC):
             value: Value from register
         """
         data = 0
+        Logging.logger.debug("Reading input register: %s", str(register))
         try:
             data = self.client.read_input_registers(
                 address=int(register.value),
@@ -78,6 +80,7 @@ class PGVAModbusClient(ABC):
     def _get_data_holding(self, register):
         """Method used to read the holding registers."""
         data = 0
+        Logging.logger.debug("Reading holding register: %s", str(register))
         try:
             data = self.client.read_holding_registers(
                 address=int(register.value),
@@ -100,7 +103,7 @@ class PGVAModbusClient(ABC):
             val: Value to be writted to register
         """
         status = object
-        Logging.logger.info("Register: %s, Value: %s", str(register), str(val))
+        Logging.logger.debug("Writing register %s, value: %s", str(register), str(val))
         try:
             if val < 0:
                 val = val + 2**16
@@ -118,7 +121,7 @@ class PGVAModbusClient(ABC):
                     count=1,
                 )
         except ModbusException as modbus_pdu_exception:
-            Logging.logger.info("Modbus Exception Error : %s", str(modbus_pdu_exception))
+            Logging.logger.error("Modbus Exception Error : %s", str(modbus_pdu_exception))
         except TypeError as type_err:
             Logging.logger.error("Type error while writing data: %s", str(type_err))
             # calibration procedure for setting exact levels of P&V
@@ -138,6 +141,7 @@ class PGVAModbusClient(ABC):
         """
         if self._validate_pump_enable():
             if consts.MINIMUM_OUTPUT_PRESSURE_MBAR <= pressure <= consts.MAXIMUM_OUTPUT_PRESSURE_MBAR:
+                Logging.logger.info("Setting output pressure to %s mBar", pressure)
                 self._set_data(commands.OUTPUT_PRESSURE_MBAR, pressure)
             else:
                 Logging.logger.error("Input pressure outside of working range: %s", str(pressure))
@@ -157,6 +161,7 @@ class PGVAModbusClient(ABC):
             ValueError: If actuation_time is outside the valid range of 5 to 65535 ms.
         """
         if actuation_time in range(5, 65535):
+            Logging.logger.info("Triggering actuation valve for %s ms", actuation_time)
             self._set_data(commands.VALVE_ACTUATION_TIME, actuation_time)
             # time.sleep(actuation_time / 1000)
         else:
@@ -180,7 +185,9 @@ class PGVAModbusClient(ABC):
             NotImplementedError: Manual trigger is not implemented due to a firmware limitation.
         """
         # self._set_data(commands.MANUAL_TRIGGER, int(toggle))
-
+        Logging.logger.warning(
+            "toggle_manual_trigger() is not implemented: known firmware bug in PGVA-1 firmware <= 2.0.45"
+        )
         raise NotImplementedError("""
                                   Manual trigger not implemented. There is a bug that exists in the PGVA-1 firmware <=2.0.45
                                   that prevents this function from working as intended
@@ -202,6 +209,7 @@ class PGVAModbusClient(ABC):
         status["VacuumChamber"] = self.get_vacuum_chamber()
         status["PressureChamber"] = self.get_pressure_chamber()
         status["OutputPressure"] = self.get_output_pressure()
+        Logging.logger.debug("Internal sensor data: %s", status)
         return status
 
     def get_vacuum_chamber(self) -> int:
@@ -215,7 +223,9 @@ class PGVAModbusClient(ABC):
             Vacuum chamber pressure in mBar
         """
         vacuum = self._get_data(commands.VACUUM_ACTUAL_MBAR)
-        return self._convert_twos_comp(vacuum, len(bin(vacuum)[2:]))
+        result = self._convert_twos_comp(vacuum, len(bin(vacuum)[2:]))
+        Logging.logger.debug("Vacuum chamber reading: %s mBar", result)
+        return result
 
     def get_pressure_chamber(self) -> int:
         """
@@ -227,7 +237,9 @@ class PGVAModbusClient(ABC):
         Returns:
             Pressure chamber pressure in mBar
         """
-        return self._get_data(commands.PRESSURE_ACTUAL_MBAR)
+        result = self._get_data(commands.PRESSURE_ACTUAL_MBAR)
+        Logging.logger.debug("Pressure chamber reading: %s mBar", result)
+        return result
 
     def get_output_pressure(self) -> int:
         """
@@ -241,7 +253,10 @@ class PGVAModbusClient(ABC):
         """
         pressure = self._get_data(commands.OUTPUT_PRESSURE_ACTUAL_MBAR)
         if pressure > 500:
-            return self._convert_twos_comp(pressure, len(bin(pressure)[2:]))
+            result = self._convert_twos_comp(pressure, len(bin(pressure)[2:]))
+            Logging.logger.debug("Output pressure reading: %s mBar", result)
+            return result
+        Logging.logger.debug("Output pressure reading: %s mBar", pressure)
         return pressure
 
     def set_pressure_chamber(self, pressure: int) -> None:
@@ -259,7 +274,7 @@ class PGVAModbusClient(ABC):
         """
         if consts.MINIMUM_PRESSURE_CHAMBER_MBAR <= pressure <= consts.MAXIMUM_PRESSURE_CHAMBER_MBAR:
             # Using the pressure scaling factor provided via operation manual of the PGVA
-
+            Logging.logger.info("Setting pressure chamber to %s mBar", pressure)
             pressure = int(pressure * consts.PRESSURE_CHAMBER_CONVERSION_FACTOR)
             self._set_data(commands.PRESSURE_THRESHOLD, pressure)
         else:
@@ -281,6 +296,7 @@ class PGVAModbusClient(ABC):
             ValueError: If vacuum is outside the supported vacuum chamber range.
         """
         if consts.MINIMUM_VACUUM_CHAMBER_MBAR <= vacuum <= consts.MAXIMUM_VACUUM_CHAMBER_MBAR:
+            Logging.logger.info("Setting vacuum chamber to %s mBar", vacuum)
             vacuum = int(vacuum * consts.VACUUM_CHAMBER_CONVERSION_FACTOR)
             self._set_data(commands.VACUUM_THRESHOLD, vacuum)
         else:
@@ -298,6 +314,7 @@ class PGVAModbusClient(ABC):
         Returns:
             None
         """
+        Logging.logger.info("Toggling pump: %s", "ON" if toggle else "OFF")
         if self.version[0:3] != [2, 1, 3]:
             self._set_data(commands.PUMP_ENABLE, toggle)
         else:
@@ -315,8 +332,9 @@ class PGVAModbusClient(ABC):
         """
         if self.version[0:3] != [2, 1, 3]:
             if self._get_data_holding(commands.PUMP_ENABLE) == 1:
+                Logging.logger.debug("Pump validation: pump is enabled")
                 return True
-            Logging.logger.info("Pump is NOT enabled, please enable")
+            Logging.logger.warning("Pump is NOT enabled — call toggle_pump(True) before setting pressure")
             return False
         Logging.logger.info("PGVA firmware version does not support the enable/disable pump function")
         return True
@@ -332,6 +350,7 @@ class PGVAModbusClient(ABC):
             None
         """
         if self.version[0:3] != [2, 1, 3]:
+            Logging.logger.info("Enabling pump")
             self._set_data(commands.PUMP_ENABLE, 1)
         else:
             Logging.logger.info("PGVA firmware does not support the enable/disable pump function")
@@ -347,6 +366,7 @@ class PGVAModbusClient(ABC):
             None
         """
         if self.version[0:3] != [2, 1, 3]:
+            Logging.logger.info("Disabling pump")
             self._set_data(commands.PUMP_ENABLE, 0)
         else:
             Logging.logger.info("connected PGVA device version does not support this function ")
@@ -390,7 +410,7 @@ class PGVAModbusClient(ABC):
             "OutputValve": self._status["OutputValve"][(pgva_status >> 11) & 1],
         }
 
-        Logging.logger.info(str(status_word))
+        Logging.logger.debug("Status word: %s", status_word)
         return status_word
 
     def get_warning_word(self) -> dict:
@@ -413,7 +433,10 @@ class PGVAModbusClient(ABC):
             "Pump": self._warning["Pump"][(pgva_warning >> 7) & 1],
             "ExternalSensor": self._warning["ExternalSensor"][(pgva_warning >> 9) & 1],
         }
-        Logging.logger.warning(str(warning_word))
+        if any(v != "Reset" for v in warning_word.values()):
+            Logging.logger.warning("Active PGVA warning(s): %s", warning_word)
+        else:
+            Logging.logger.debug("Warning word: %s", warning_word)
         return warning_word
 
     def get_error_word(self) -> dict:
@@ -435,7 +458,10 @@ class PGVAModbusClient(ABC):
             "HighVoltage": self._pgva_error["HighVoltage"][(pgva_error >> 4) & 1],
             "TimeoutExternalSensor": self._pgva_error["TimeoutExternalSensor"][(pgva_error >> 5) & 1],
         }
-        Logging.logger.error(str(error_word))
+        if any(v != "Reset" for v in error_word.values()):
+            Logging.logger.error("Active PGVA error(s): %s", error_word)
+        else:
+            Logging.logger.debug("Error word: %s", error_word)
         return error_word
 
     def get_modbus_error_word(self) -> dict:
@@ -450,7 +476,10 @@ class PGVAModbusClient(ABC):
         """
         modbus_error = self._get_data(commands.LAST_MODBUS_ERROR)
         modbus_error_word = {"OutputActuationTime": self._modbus_error["OutputActuationTime"][modbus_error & 1]}
-        Logging.logger.error(str(modbus_error_word))
+        if any(v != "Reset" for v in modbus_error_word.values()):
+            Logging.logger.error("Active Modbus error(s): %s", modbus_error_word)
+        else:
+            Logging.logger.debug("Modbus error word: %s", modbus_error_word)
         return modbus_error_word
 
     def _set_pgva_status(self):
@@ -662,8 +691,14 @@ class PGVAModbusTCP(PGVAModbusClient):
             self._set_pgva_status()
             self._set_pgva_warning()
             self.version = self.get_firmware_version()
-        except socket.error as socket_error:  # TODO: IS this right? Feels stupid to import the package just for this if there is an equivalent pymodbus exception being raised
-            # TODO; e.g. pymodbus.exceptions.ConnectionException
+            Logging.logger.info(
+                "PGVA connected via TCP — host: %s, port: %s, unit_id: %s, firmware: %s",
+                self._config.ip,
+                self._config.port,
+                self._config.unit_id,
+                self.version,
+            )
+        except socket.error as socket_error:
             Logging.logger.error("Socket error: %s. ", str(socket_error))
             Logging.logger.info(self._config)
 
@@ -716,6 +751,13 @@ class PGVAModbusSerial(PGVAModbusClient):
             self._set_pgva_error()
             self._set_pgva_status()
             self._set_pgva_warning()
+            Logging.logger.info(
+                "PGVA connected via Serial — port: %s, baudrate: %s, unit_id: %s, firmware: %s",
+                self._config.com_port,
+                self._config.baudrate,
+                self._config.unit_id,
+                self.version,
+            )
         except RuntimeError as run_err:
             Logging.logger.error("Error with serial connection: %s", str(run_err))
             Logging.logger.info(self._config)
