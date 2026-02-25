@@ -1,5 +1,7 @@
 """
-Logging for PGVA
+Logging for PGVA.
+
+Logging utility module for the PGVA driver.
 """
 
 import logging
@@ -13,6 +15,7 @@ class Logging:
     logger = logging.getLogger("pgva")
 
     def __init__(self, logging_level=logging.INFO, filename=None):
+        """Constructor for logging handling utility in PGVA control module."""
         logging.basicConfig(format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
 
         Logging.logger.setLevel(logging_level)

@@ -22,7 +22,6 @@ dependencies = [
     "rich>=14.0.0",
 ]
 
-
 [project.optional-dependencies]
 serial = [
     "pymodbus[serial]<=3.11.4",
@@ -35,7 +34,7 @@ Repository = "https://github.com/Festo-se/festo-pgva.git"
 Issues = "https://github.com/Festo-se/festo-pgva/issues"
 
 [build-system]
-requires = ["uv_build>=0.9.17,<0.10.0"]
+requires = ["uv_build>=0.9.17,<1"]
 build-backend = "uv_build"
 
 [dependency-groups]
@@ -59,7 +58,7 @@ cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true } }]
 module-name = "pgva"
 
 [tool.ruff]
-line-length = 150
+line-length = 120
 indent-width = 4
 target-version = "py311"
 src = ["src", "examples"]
@@ -74,42 +73,18 @@ exclude = [
 fix = true
 show-fixes = true
 
-
 [tool.ruff.lint]
-select = ["PL"]
-extend-select = [
-    "E",
-    "W",
-    "F",
-    "C90",
-    "B9",
-    "S",
-    "I",
-    "C",
-    "R",
-    "B",
-    "Q",
-    "PLC",
-    "PLE",
-    "PLW",
-    "PLR",
-]
-ignore = [
-    "PLR2004", # Ignore Magic value found
-    "PLR0915", # Ignore too many statements
-    "C901",
-]
+select = ["D", "E4", "E7", "E9", "F", "C901", "B", "S"]
+ignore = ["D203", "D212"]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore D100 and D104 in all __init__.py files
+"__init__.py" = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "double"
 line-ending = "auto"
-exclude = [
-    ".git",
-    "__pycache__",
-    ".vscode",
-    ".venv",
-    ".pytest_cache",
-    "tests",
-
-]

@@ -1,15 +1,11 @@
-"""
-Register mapping for PGVA
-"""
+"""Register mapping for PGVA."""
 
 from enum import Enum, unique
 
 
 @unique
 class _PGVARegisters(Enum):
-    """
-    Enum class for PGVA register mapping
-    """
+    """Enum class for PGVA register mapping."""
 
     VACUUM_ACTUAL = 256
     PRESSURE_ACTUAL = 257

@@ -1,26 +1,28 @@
 """
-PGVA-1 backend communication module
+PGVA-1 communication backend module.
+
+PGVA driver communication backend implementation.
+PGVA driver can use two different modes of communication to control the device, ModbusSerial and ModbusTCP.
+These are implemented here.
 """
 
-from abc import ABC, abstractmethod
 import socket
+from abc import ABC, abstractmethod
 
 from pymodbus.client import ModbusSerialClient, ModbusTcpClient
-from pymodbus.exceptions import ModbusException, ConnectionException
+from pymodbus.exceptions import ModbusException
 
 import pgva.utils.constants as consts
 from pgva.registers import _PGVARegisters as commands
 from pgva.utils.logging import Logging
 
-from .pgva_config import PGVASerialConfig, PGVATCPConfig
+from .pgva_config import PGVASerialConfig, PGVATCPConfig, PGVAConfig
 
 
 class PGVAModbusClient(ABC):
-    """
-    Modbus Client Class
-    """
+    """Modbus Client Class."""
 
-    client: ModbusTcpClient
+    client: ModbusTcpClient | ModbusSerialClient
     version: list
     _pgva_error: dict
     _modbus_error: dict
@@ -29,21 +31,18 @@ class PGVAModbusClient(ABC):
 
     @abstractmethod
     def __init__(self, config):
-        """
-        Base abstract class init, ModbusTCP and ModbusSerial
-        will have their own implemenation
-        """
+        """Base abstract class init, ModbusTCP and ModbusSerial will have their own implemenation."""
         self._config = config
 
     def get_firmware_version(self) -> list:
-        """
-        Gets the current firmware version located on the PGVA\n
+        """Gets the current firmware version located on the PGVA.
+
         Args:
-            None\n
+            None
+
         Returns:
             List of the version
         """
-
         self.version = []
         if len(self.version) < 3:
             self.version.append(self._get_data(commands.FIRMWARE_VERSION))
@@ -54,9 +53,11 @@ class PGVAModbusClient(ABC):
 
     def _get_data(self, register):
         """
-        Method used to access data from a register
-        Inputs:
+        Method used to access data from a register.
+
+        Args:
             register: Register address for data access
+
         Returns:
             value: Value from register
         """
@@ -75,9 +76,7 @@ class PGVAModbusClient(ABC):
             return None
 
     def _get_data_holding(self, register):
-        """
-        Method used to read the holding registers
-        """
+        """Method used to read the holding registers."""
         data = 0
         try:
             data = self.client.read_holding_registers(
@@ -94,10 +93,11 @@ class PGVAModbusClient(ABC):
 
     def _set_data(self, register, val):
         """
-        Method used to write to registers
-        Inputs:
+        Method used to write to registers.
+
+        Args:
             register: Register address for accessing
-            val: Value to be writted to registe
+            val: Value to be writted to register
         """
         status = object
         Logging.logger.info("Register: %s, Value: %s", str(register), str(val))
@@ -125,11 +125,16 @@ class PGVAModbusClient(ABC):
 
     def set_output_pressure(self, pressure: int) -> None:
         """
-        Sets the output pressure for the PGVA\n
+        Sets the output pressure for the PGVA.
+
         Args:
-            pressure in mBar (int): Any range between -450 ... 450\n
+            pressure (int): Any range between -450 ... 450
+
         Returns:
             None
+
+        Raises:
+            ValueError: If pressure is outside the supported output pressure range.
         """
         if self._validate_pump_enable():
             if consts.MINIMUM_OUTPUT_PRESSURE_MBAR <= pressure <= consts.MAXIMUM_OUTPUT_PRESSURE_MBAR:
@@ -140,11 +145,16 @@ class PGVAModbusClient(ABC):
 
     def set_actuation_time(self, actuation_time: int) -> None:
         """
-        Sets the valve actuation time which is then immediately executed\n
+        Sets the valve actuation time which is then immediately executed.
+
         Args:
-            actuation_time (int): Time in ms for valve to be open\n
+            actuation_time (int): Time in ms for valve to be open
+
         Returns:
             None
+
+        Raises:
+            ValueError: If actuation_time is outside the valid range of 5 to 65535 ms.
         """
         if actuation_time in range(5, 65535):
             self._set_data(commands.VALVE_ACTUATION_TIME, actuation_time)
@@ -158,11 +168,16 @@ class PGVAModbusClient(ABC):
 
     def toggle_manual_trigger(self, toggle: bool) -> None:
         """
-        Toggles the manual trigger to either on or off\n
+        Toggles the manual trigger to either on or off.
+
         Args:
-            toggle (int): Bool value, 1 for on, 0 for off\n
+            toggle (int): Bool value, 1 for on, 0 for off
+
         Returns:
             None
+
+        Raises:
+            NotImplementedError: Manual trigger is not implemented due to a firmware limitation.
         """
         # self._set_data(commands.MANUAL_TRIGGER, int(toggle))
 
@@ -173,9 +188,11 @@ class PGVAModbusClient(ABC):
 
     def get_internal_sensor_data(self) -> dict:
         """
-        Reads the internal Vacuum and Pressure chambers as well as the output pressure sensor\n
+        Reads the internal Vacuum and Pressure chambers as well as the output pressure sensor.
+
         Args:
-            None\n
+            None
+
         Returns:
             Dictionary of the sensor values
         """
@@ -189,9 +206,11 @@ class PGVAModbusClient(ABC):
 
     def get_vacuum_chamber(self) -> int:
         """
-        Reads the internal vacuum chamber pressure\n
+        Reads the internal vacuum chamber pressure.
+
         Args:
-            None\n
+            None
+
         Returns:
             Vacuum chamber pressure in mBar
         """
@@ -200,9 +219,11 @@ class PGVAModbusClient(ABC):
 
     def get_pressure_chamber(self) -> int:
         """
-        Reads the internal pressure chamber pressure\n
+        Reads the internal pressure chamber pressure.
+
         Args:
-            None\n
+            None
+
         Returns:
             Pressure chamber pressure in mBar
         """
@@ -210,9 +231,11 @@ class PGVAModbusClient(ABC):
 
     def get_output_pressure(self) -> int:
         """
-        Reads the output port pressure\n
+        Reads the output port pressure.
+
         Args:
-            None\n
+            None
+
         Returns:
             Output pressure in mBar
         """
@@ -223,11 +246,16 @@ class PGVAModbusClient(ABC):
 
     def set_pressure_chamber(self, pressure: int) -> None:
         """
-        Sets the internal pressure chamber\n
+        Sets the internal pressure chamber.
+
         Args:
-            Pressure (int): Range between 200 ... 1000 mBar\n
+            pressure (int): Range between 200 ... 1000 mBar
+
         Returns:
             None
+
+        Raises:
+            ValueError: If pressure is outside the supported pressure chamber range.
         """
         if consts.MINIMUM_PRESSURE_CHAMBER_MBAR <= pressure <= consts.MAXIMUM_PRESSURE_CHAMBER_MBAR:
             # Using the pressure scaling factor provided via operation manual of the PGVA
@@ -241,11 +269,16 @@ class PGVAModbusClient(ABC):
 
     def set_vacuum_chamber(self, vacuum: int) -> None:
         """
-        Sets the internal vacuum chamber\n
+        Sets the internal vacuum chamber.
+
         Args:
-            Vacuum (int): Range between -200 ... -620 mBar\n
+            vacuum (int): Range between -200 ... -620 mBar
+
         Returns:
             None
+
+        Raises:
+            ValueError: If vacuum is outside the supported vacuum chamber range.
         """
         if consts.MINIMUM_VACUUM_CHAMBER_MBAR <= vacuum <= consts.MAXIMUM_VACUUM_CHAMBER_MBAR:
             vacuum = int(vacuum * consts.VACUUM_CHAMBER_CONVERSION_FACTOR)
@@ -257,9 +290,11 @@ class PGVAModbusClient(ABC):
 
     def toggle_pump(self, toggle: bool) -> None:
         """
-        Enables or disables the pump for creating pressure / vacuum\n
+        Enables or disables the pump for creating pressure / vacuum.
+
         Args:
-            toggle (bool): 1 for on, 0 for off\n
+            toggle (bool): 1 for on, 0 for off
+
         Returns:
             None
         """
@@ -270,9 +305,11 @@ class PGVAModbusClient(ABC):
 
     def _validate_pump_enable(self):
         """
-        Validates that the pump is enabled for creating pressure
+        Validates that the pump is enabled for creating pressure.
+
         Args:
             None
+
         Returns:
             Bool: True if enabled, False if disabled
         """
@@ -286,9 +323,11 @@ class PGVAModbusClient(ABC):
 
     def _enable_pump(self):
         """
-        Enables the pump
+        Enables the pump.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -299,9 +338,11 @@ class PGVAModbusClient(ABC):
 
     def _disable_pump(self):
         """
-        Disables the pump
+        Disables the pump.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -312,9 +353,11 @@ class PGVAModbusClient(ABC):
 
     def print_driver_information(self) -> None:
         """
-        Prints all parameters\n
+        Prints all parameters.
+
         Args:
-            None\n
+            None
+
         Returns:
             None
         """
@@ -326,9 +369,11 @@ class PGVAModbusClient(ABC):
 
     def get_status_word(self) -> dict:
         """
-        Reads the status word and outputs it to the log\n
+        Reads the status word and outputs it to the log.
+
         Args:
-            None\n
+            None
+
         Returns:
             Current status of the PGVA-1
         """
@@ -350,9 +395,11 @@ class PGVAModbusClient(ABC):
 
     def get_warning_word(self) -> dict:
         """
-        Reads the warning word and outputs it to the log\n
+        Reads the warning word and outputs it to the log.
+
         Args:
-            None\n
+            None
+
         Returns:
            Current warning word of the PGVA-1
         """
@@ -371,9 +418,11 @@ class PGVAModbusClient(ABC):
 
     def get_error_word(self) -> dict:
         """
-        Reads the error word and outputs it to the log\n
+        Reads the error word and outputs it to the log.
+
         Args:
-            None\n
+            None
+
         Returns:
             Current error word of the PGVA-1
         """
@@ -391,9 +440,11 @@ class PGVAModbusClient(ABC):
 
     def get_modbus_error_word(self) -> dict:
         """
-        Reads the modbus error word and outputs it to the log\n
+        Reads the modbus error word and outputs it to the log.
+
         Args:
-            None\n
+            None
+
         Returns:
             Current modbus error word of the PGVA-1
         """
@@ -404,9 +455,11 @@ class PGVAModbusClient(ABC):
 
     def _set_pgva_status(self):
         """
-        Sets the internal messages for the incoming status word
+        Sets the internal messages for the incoming status word.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -440,9 +493,11 @@ class PGVAModbusClient(ABC):
 
     def _set_pgva_warning(self):
         """
-        Sets the internal messages for the incoming warning word
+        Sets the internal messages for the incoming warning word.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -468,9 +523,11 @@ class PGVAModbusClient(ABC):
 
     def _set_pgva_error(self):
         """
-        Sets the internal messages for the incoming error word
+        Sets the internal messages for the incoming error word.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -491,9 +548,11 @@ class PGVAModbusClient(ABC):
 
     def _set_modbus_error(self):
         """
-        Sets the internal messages for the incoming modbus error word
+        Sets the internal messages for the incoming modbus error word.
+
         Args:
             None
+
         Returns:
             None
         """
@@ -555,10 +614,12 @@ class PGVAModbusClient(ABC):
 
     def _convert_twos_comp(self, val, bits):
         """
-        Converts a 2 compliment value into the actual signed integer value
+        Converts a 2 compliment value into the actual signed integer value.
+
         Args:
             val: value
             bits: number of bits
+
         Returns:
             Converted signed integer value
         """
@@ -569,16 +630,23 @@ class PGVAModbusClient(ABC):
 
 class PGVAModbusTCP(PGVAModbusClient):
     """
-    This class is the interface backend for using Modbus TCP communication
+    This class is the interface backend for using Modbus TCP communication.
+
+    TODO: Add typical usage example
     """
 
-    def __init__(self, config: PGVATCPConfig) -> None:
+    def __init__(self, config: PGVAConfig) -> None:
         """
-        Contstructor\n
+        TCP Client Interface Constructor.
+
         Args:
-            config (PGVATCPConfig): A configuration class designated for ModbusTCP\n
+            config (PGVATCPConfig): A configuration class designated for ModbusTCP
+
         Returns:
             None
+
+        Raises:
+            TypeError: If config is not an instance of PGVATCPConfig.
         """
         super().__init__(config)
         if not isinstance(config, PGVATCPConfig):
@@ -601,9 +669,11 @@ class PGVAModbusTCP(PGVAModbusClient):
 
     def print_driver_information(self) -> None:
         """
-        Prints all parameters\n
+        Display all available information about the PGVA driver.
+
         Args:
-            None\n
+            None
+
         Returns:
             None
         """
@@ -614,17 +684,20 @@ class PGVAModbusTCP(PGVAModbusClient):
 
 
 class PGVAModbusSerial(PGVAModbusClient):
-    """
-    This class is the interface backend for using Modbus Serial communication
-    """
+    """This class is the interface backend for using Modbus Serial communication."""
 
-    def __init__(self, config: PGVASerialConfig) -> None:
+    def __init__(self, config: PGVAConfig) -> None:
         """
-        Contstructor\n
+        Serial Client Interface Constructor.
+
         Args:
-            config (PGVASerialConfig): A configuration class designated for ModbusSerial\n
+            config (PGVASerialConfig): A configuration class designated for ModbusSerial
+
         Returns:
             None
+
+        Raises:
+            TypeError: If config is not an instance of PGVASerialConfig.
         """
         Logging.logger.warning("""The Modbus Serial connection mode is currently experimental and under active development.
                                 It can currently only be instantiated directly.
@@ -649,9 +722,11 @@ class PGVAModbusSerial(PGVAModbusClient):
 
     def print_driver_information(self) -> None:
         """
-        Prints all driver information\n
+        Display all available information about the PGVA driver.
+
         Args:
-            None\n
+            None
+
         Returns:
             None
         """
