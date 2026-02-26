@@ -64,7 +64,6 @@ class PGVAModbusClient(ABC):
         Returns:
             value: Value from register
         """
-
         logger.debug("Reading input register: %s", str(register))
         try:
             data = self.client.read_input_registers(
