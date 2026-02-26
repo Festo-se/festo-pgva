@@ -15,11 +15,11 @@ classifiers = [
 ]
 keywords = ["Festo", "Pressure", "Vacuum", "Generator"]
 # dynamic = ["version"]
-version = "0.2.0"
+version = "0.2.1"
 requires-python = ">=3.10"
 dependencies = [
     "pymodbus<=3.11.4",
-    "rich>=14.0.0",
+    "festo-python-logging>=0.0.10",
 ]
 
 [project.optional-dependencies]

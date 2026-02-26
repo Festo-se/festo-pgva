@@ -1,6 +1,5 @@
 from unittest.mock import Mock, patch, call
 from pgva import PGVATCPConfig, PGVA
-from pgva.utils.logging import Logging
 from pymodbus.client import ModbusTcpClient
 
 #com_port="COM1", tcp_port=502, host="192.168.0.1", baudrate=115200, unit_id=1

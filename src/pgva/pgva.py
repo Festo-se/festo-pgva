@@ -5,9 +5,12 @@ Unified driver front-end exposing standard PGVA control API for both ModbusSeria
  communication clients
 """
 
+import logging
+
 from .pgva_communication import PGVAModbusClient, PGVAModbusSerial, PGVAModbusTCP
 from .pgva_config import PGVAConfig, PGVASerialConfig, PGVATCPConfig
-from .utils.logging import Logging
+
+logger = logging.getLogger(__name__)
 
 
 class PGVA:
@@ -40,18 +43,18 @@ class PGVA:
             self._config = config
             match config:
                 case PGVASerialConfig():
-                    Logging.logger.error("""
+                    logger.error("""
                         Serial support for PGVA communication is currently experimental.
                         The serial connected can be tested explicitly by instantiating PGVAModbusSerial and passing in the communication backend explicitly.
                     """)
                     raise NotImplementedError("Serial communication is experimental and must be invoked directly")
                     self._backend = PGVAModbusSerial(config=self._config)
-                    Logging.logger.debug("PGVA front-end initialised with serial backend")
+                    logger.debug("PGVA front-end initialised with serial backend")
                 case PGVATCPConfig():
                     self._backend = PGVAModbusTCP(config=self._config)
-                    Logging.logger.debug("PGVA front-end initialised with TCP backend")
+                    logger.debug("PGVA front-end initialised with TCP backend")
         else:
-            Logging.logger.error("Unsupported configuration type passed to PGVA: %s", type(config).__name__)
+            logger.error("Unsupported configuration type passed to PGVA: %s", type(config).__name__)
             raise TypeError("Error, configuration passed in is not supported by driver")
 
     def set_output_pressure(self, pressure: int) -> None:
