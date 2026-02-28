@@ -111,7 +111,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Fetch all tags so we can check whether this version is already tagged
+          # Full history required by git-cliff to generate the changelog.
+          # fetch-tags ensures we can check whether this version is already tagged.
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Extract version from pyproject.toml
@@ -129,10 +131,27 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create and push tag
+      # Generate and commit the changelog onto main BEFORE the tag is pushed
+      # so the tag points at a commit that already contains the updated CHANGELOG.md.
+      # release-publish.yml then just reads the changelog for the release body.
+      - name: Generate changelog and prepend to CHANGELOG.md
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag ${{ steps.version.outputs.version }} --latest --strip header --prepend CHANGELOG.md
+
+      - name: Commit updated CHANGELOG.md to main
         if: steps.tag_check.outputs.exists == 'false'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for ${{ steps.version.outputs.version }}"
+          git push origin main
+
+      - name: Create and push tag
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
