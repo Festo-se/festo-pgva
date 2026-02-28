@@ -40,7 +40,9 @@ build-backend = "uv_build"
 dev = [
     "festo-python-logging>=0.0.10",
     "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
     "pytest-mock>=3.14.0",
+    "ty>=0.0.19",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -95,3 +97,20 @@ convention = "google"
 indent-style = "space"
 quote-style = "double"
 line-ending = "auto"
+
+
+[tool.coverage.run]
+source = ["pgva"]
+branch = true                
+omit = [
+    "src/pgva/pgva_interface.py",   
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",    
+    "if __name__ == .__main__.:",
+]
