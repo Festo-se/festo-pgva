@@ -61,20 +61,15 @@ jobs:
           name: distribution-artifacts
           path: dist
 
-      - name: Generate changelog and prepend to CHANGELOG.md
+      # CHANGELOG.md was already updated and committed to main by the tag job
+      # in test.yml before this tag was pushed.  Run git-cliff here only to
+      # produce the release body text — no file write or commit needed.
+      - name: Generate release body from changelog
         uses: orhun/git-cliff-action@v4
         id: changelog
         with:
           config: cliff.toml
-          args: --latest --strip header --prepend CHANGELOG.md
-
-      - name: Commit updated CHANGELOG.md
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "docs: update changelog for ${{ github.ref_name }}"
-          git push origin HEAD:main
+          args: --latest --strip header
 
       - name: Create GitHub Release and upload artifacts
         uses: softprops/action-gh-release@v2
