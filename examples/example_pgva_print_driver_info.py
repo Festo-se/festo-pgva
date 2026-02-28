@@ -4,6 +4,9 @@
 from os import getenv
 
 from pgva import PGVA, PGVATCPConfig
+from festo_python_logging import configure_logging
+
+configure_logging(verbose=True, silence=["pymodbus.logging"])
 
 ip = getenv("PGVA_IP", "192.168.0.1")
 

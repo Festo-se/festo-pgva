@@ -1,15 +1,23 @@
 """
-Front end PGVA interface
+PGVA interface Front end.
+
+Unified driver front-end exposing standard PGVA control API for both ModbusSerial and ModbusTCP
+ communication clients
 """
+
+import logging
 
 from .pgva_communication import PGVAModbusClient, PGVAModbusSerial, PGVAModbusTCP
 from .pgva_config import PGVAConfig, PGVASerialConfig, PGVATCPConfig
-from .utils.logging import Logging
+
+logger = logging.getLogger(__name__)
 
 
 class PGVA:
     """
-    PGVA driver class. This is the main class that the user will interact with
+    PGVA driver class.
+
+    This is the main class that the user will interact with
     to control the PGVA-1 device.
     """
 
@@ -17,36 +25,45 @@ class PGVA:
 
     def __init__(self, config: PGVAConfig):
         """
-        Constructor\n
+        PGVA driver class constructor.
+
         Args:
             config (PGVAConfig): A ModbusTCP or ModbusSerial config
                     type to allow the driver to connect to the
                     correct communication interface
-        \n
+
         Returns:
             None
-        """
 
+        Raises:
+            NotImplementedError: If a serial configuration is passed through PGVA.
+            TypeError: If config is not a supported PGVAConfig type for this driver.
+        """
         if isinstance(config, PGVAConfig):
             self._config = config
             match config:
                 case PGVASerialConfig():
-                    Logging.logger.error("Serial support for PGVA communication is currently experimental.")
-                    Logging.logger.error(
-                        "The serial connected can be tested explicitly by instantiating PGVAModbusSerial and passing in the communication backend explicitly."
-                    )
+                    logger.error("""
+                        Serial support for PGVA communication is currently experimental.
+                        The serial connected can be tested explicitly by instantiating PGVAModbusSerial and passing in the communication backend explicitly.
+                    """)
                     raise NotImplementedError("Serial communication is experimental and must be invoked directly")
                     self._backend = PGVAModbusSerial(config=self._config)
+                    logger.debug("PGVA front-end initialised with serial backend")
                 case PGVATCPConfig():
                     self._backend = PGVAModbusTCP(config=self._config)
+                    logger.debug("PGVA front-end initialised with TCP backend")
         else:
+            logger.error("Unsupported configuration type passed to PGVA: %s", type(config).__name__)
             raise TypeError("Error, configuration passed in is not supported by driver")
 
     def set_output_pressure(self, pressure: int) -> None:
         """
-        Sets the output pressure to PGVA\n
+        Sets the output pressure to PGVA.
+
         Args:
-            pressure (int): Pressure in mBar between -450 ... 450\n
+            pressure (int): Pressure in mBar between -450 ... 450
+
         Returns:
             None
         """
@@ -54,9 +71,11 @@ class PGVA:
 
     def trigger_actuation_valve(self, actuation_time: int) -> None:
         """
-        Opens the actuation valve for a certain amount of time\n
+        Opens the actuation valve for a certain amount of time.
+
         Args:
-            actuation_time (int): Time in milliseconds\n
+            actuation_time (int): Time in milliseconds
+
         Returns:
             None
         """
@@ -64,9 +83,11 @@ class PGVA:
 
     def set_pressure_chamber(self, pressure: int) -> None:
         """
-        Sets the internal pressure chamber\n
+        Sets the internal pressure chamber.
+
         Args:
-            pressure (int): Range between 0 and 450 mBar\n
+            pressure (int): Range between 0 and 450 mBar
+
         Returns:
             None
         """
@@ -74,9 +95,11 @@ class PGVA:
 
     def set_vacuum_chamber(self, vacuum: int) -> None:
         """
-        Sets the internal vacuum chamber\n
+        Sets the internal vacuum chamber.
+
         Args:
-            vacuum (int): Range between -450 and 0 mBar\n
+            vacuum (int): Range between -450 and 0 mBar
+
         Returns:
             None
         """
@@ -84,9 +107,11 @@ class PGVA:
 
     def get_pressure_chamber(self) -> int:
         """
-        Returns the current reading of the pressure chamber in mBar\n
+        Returns the current reading of the pressure chamber in mBar.
+
         Args:
-            None\n
+            None
+
         Returns:
             Pressure chamber pressure in mBar
         """
@@ -94,9 +119,11 @@ class PGVA:
 
     def get_vacuum_chamber(self) -> int:
         """
-        Returns the current reading of the vacuum chamber in mBar\n
+        Returns the current reading of the vacuum chamber in mBar.
+
         Args:
-            None\n
+            None
+
         Returns:
             Vacuum chamber pressure in mBar
         """
@@ -104,9 +131,11 @@ class PGVA:
 
     def get_output_pressure(self) -> int:
         """
-        Returns the output port pressure in mBar\n
+        Returns the output port pressure in mBar.
+
         Args:
-            None\n
+            None
+
         Returns:
             Positive or negative pressure in mBar
         """
@@ -114,9 +143,11 @@ class PGVA:
 
     def get_internal_sensor_data(self) -> dict:
         """
-        Returns all the internal sensor data in mBar\n
+        Returns all the internal sensor data in mBar.
+
         Args:
-            None\n
+            None
+
         Returns:
             All current readings of internal sensors
         """
@@ -124,9 +155,11 @@ class PGVA:
 
     def toggle_pump(self, toggle: bool) -> None:
         """
-        Enable / Disables the pump\n
+        Enable / Disables the pump.
+
         Args:
-            toggle (bool): 1 for on, 0 for off\n
+            toggle (bool): 1 for on, 0 for off
+
         Returns:
             None
         """
@@ -134,9 +167,11 @@ class PGVA:
 
     def get_status_word(self) -> dict:
         """
-        Gets the status word from the PGVA\n
+        Gets the status word from the PGVA.
+
         Args:
-            None\n
+            None
+
         Returns:
            Dictionary of the status word
         """
@@ -144,9 +179,11 @@ class PGVA:
 
     def get_warning_word(self) -> dict:
         """
-        Gets the warning word from the PGVA-1\n
+        Gets the warning word from the PGVA-1.
+
         Args:
-            None\n
+            None
+
         Returns:
             Dictionary of warning word
         """
@@ -154,9 +191,11 @@ class PGVA:
 
     def get_error_word(self) -> dict:
         """
-        Gets the error word from the PGVA-1\n
+        Gets the error word from the PGVA-1.
+
         Args:
-            None\n
+            None
+
         Returns:
             Dictionary of error word
         """
@@ -164,9 +203,11 @@ class PGVA:
 
     def get_modbus_error_word(self) -> dict:
         """
-        Get the error word from the PGVA-1\n
+        Get the error word from the PGVA-1.
+
         Args:
-            None\n
+            None
+
         Returns:
             Dictionary of modbus error word
         """
@@ -174,9 +215,11 @@ class PGVA:
 
     def toggle_trigger(self, trigger: bool) -> None:
         """
-        Toggles the trigger\n
+        Toggles the trigger.
+
         Args:
-            trigger (bool): bool value for on or off\n
+            trigger (bool): bool value for on or off
+
         Returns:
             None
         """
@@ -184,9 +227,11 @@ class PGVA:
 
     def print_driver_information(self) -> None:
         """
-        Prints driver information to console\n
+        Prints driver information to console.
+
         Args:
-            None\n
+            None
+
         Returns:
             None
         """

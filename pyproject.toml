@@ -15,13 +15,11 @@ classifiers = [
 ]
 keywords = ["Festo", "Pressure", "Vacuum", "Generator"]
 # dynamic = ["version"]
-version = "0.2.0"
+version = "0.2.1"
 requires-python = ">=3.10"
 dependencies = [
     "pymodbus<=3.11.4",
-    "rich>=14.0.0",
 ]
-
 
 [project.optional-dependencies]
 serial = [
@@ -35,12 +33,17 @@ Repository = "https://github.com/Festo-se/festo-pgva.git"
 Issues = "https://github.com/Festo-se/festo-pgva/issues"
 
 [build-system]
-requires = ["uv_build>=0.9.17,<0.10.0"]
+requires = ["uv_build>=0.9.17,<1"]
 build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "festo-python-logging>=0.0.10",
     "pytest>=9.0.1",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.15.4",
+    "ty>=0.0.19",
 ]
 docs = [
     "mkdocs>=1.6.1",
@@ -58,8 +61,14 @@ cache-keys = [{ file = "pyproject.toml" }, { git = { commit = true } }]
 [tool.uv.build-backend]
 module-name = "pgva"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "hardware: marks tests that require a live PGVA-1 device (deselect with -m 'not hardware')",
+]
+
 [tool.ruff]
-line-length = 150
+line-length = 120
 indent-width = 4
 target-version = "py311"
 src = ["src", "examples"]
@@ -69,47 +78,40 @@ exclude = [
     ".vscode",
     ".venv",
     ".pytest_cache",
-    "tests",
 ]
 fix = true
 show-fixes = true
 
-
 [tool.ruff.lint]
-select = ["PL"]
-extend-select = [
-    "E",
-    "W",
-    "F",
-    "C90",
-    "B9",
-    "S",
-    "I",
-    "C",
-    "R",
-    "B",
-    "Q",
-    "PLC",
-    "PLE",
-    "PLW",
-    "PLR",
-]
-ignore = [
-    "PLR2004", # Ignore Magic value found
-    "PLR0915", # Ignore too many statements
-    "C901",
-]
+select = ["D", "E4", "E7", "E9", "F", "C901", "B", "S"]
+ignore = ["D203", "D212"]
+exclude = ["tests/*",]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore D100 and D104 in all __init__.py files
+"__init__.py" = ["D100", "D104"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.format]
 indent-style = "space"
 quote-style = "double"
 line-ending = "auto"
-exclude = [
-    ".git",
-    "__pycache__",
-    ".vscode",
-    ".venv",
-    ".pytest_cache",
-    "tests",
 
+
+[tool.coverage.run]
+source = ["pgva"]
+branch = true                
+omit = [
+    "src/pgva/pgva_interface.py",   
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",    
+    "if __name__ == .__main__.:",
 ]
