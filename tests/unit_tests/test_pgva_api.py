@@ -11,7 +11,6 @@ All tests use the ``pgva_tcp_mock`` fixture (no hardware required).
 """
 
 
-
 # ---------------------------------------------------------------------------
 # Setters — verify correct delegation and argument forwarding
 # ---------------------------------------------------------------------------
