@@ -27,5 +27,15 @@ commit_parsers = [
 commit_preprocessors = [
     # Strip conventional commit prefixes (feat:, fix(scope):, etc.) from the title.
     { pattern = "^(feat|fix|chore|docs|style|refactor|perf|test|build|ci)([\\(\\[].+[\\)\\]])?!?: ", replace = "" },
+    # Normalize the Changelog: trailer value to title case so that e.g.
+    # "Changelog: added" and "Changelog: Added" map to the same section.
+    { pattern = "(?im)^Changelog:\\s*added$",       replace = "Changelog: Added" },
+    { pattern = "(?im)^Changelog:\\s*changed$",     replace = "Changelog: Changed" },
+    { pattern = "(?im)^Changelog:\\s*fixed$",       replace = "Changelog: Fixed" },
+    { pattern = "(?im)^Changelog:\\s*deprecated$",  replace = "Changelog: Deprecated" },
+    { pattern = "(?im)^Changelog:\\s*removed$",     replace = "Changelog: Removed" },
+    { pattern = "(?im)^Changelog:\\s*security$",    replace = "Changelog: Security" },
+    { pattern = "(?im)^Changelog:\\s*performance$", replace = "Changelog: Performance" },
+    { pattern = "(?im)^Changelog:\\s*other$",       replace = "Changelog: Other" },
 ]
 tag_pattern = "[0-9]+\\.[0-9]+\\.[0-9]+"
