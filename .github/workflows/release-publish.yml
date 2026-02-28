@@ -51,16 +51,36 @@ jobs:
       contents: write
 
     steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - name: Download distribution artifacts
         uses: actions/download-artifact@v4
         with:
           name: distribution-artifacts
           path: dist
 
+      - name: Generate changelog and prepend to CHANGELOG.md
+        uses: orhun/git-cliff-action@v4
+        id: changelog
+        with:
+          config: cliff.toml
+          args: --latest --strip header --prepend CHANGELOG.md
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update changelog for ${{ github.ref_name }}"
+          git push origin HEAD:main
+
       - name: Create GitHub Release and upload artifacts
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
+          body: ${{ steps.changelog.outputs.content }}
           files: dist/*
           fail_on_unmatched_files: true
 
