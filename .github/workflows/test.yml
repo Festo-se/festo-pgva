@@ -155,3 +155,14 @@ jobs:
         run: |
           git tag ${{ steps.version.outputs.version }}
           git push origin ${{ steps.version.outputs.version }}
+
+      # GITHUB_TOKEN-driven pushes do not trigger other workflows, so we
+      # dispatch release-publish.yml explicitly via the workflow_dispatch event.
+      - name: Trigger release-publish workflow
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          gh workflow run release-publish.yml \
+            --ref ${{ steps.version.outputs.version }} \
+            --field tag=${{ steps.version.outputs.version }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

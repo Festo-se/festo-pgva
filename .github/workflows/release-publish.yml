@@ -11,16 +11,26 @@ on:
   push:
     tags:
       - "*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. 1.2.3)"
+        required: true
+        type: string
 
 # default: least privileged permissions across all jobs
 permissions:
   contents: read
 
+# Resolve the tag from either a workflow_dispatch input or the pushed tag ref.
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-release-${{ github.ref_name }}
+      group: ${{ github.workflow }}-release-${{ env.RELEASE_TAG }}
       cancel-in-progress: false
 
     permissions:
@@ -29,7 +39,7 @@ jobs:
       - name: Setup | Checkout Repository on Release Branch
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.RELEASE_TAG }}
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Install Python 3.13
@@ -74,7 +84,7 @@ jobs:
       - name: Create GitHub Release and upload artifacts
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.RELEASE_TAG }}
           body: ${{ steps.changelog.outputs.content }}
           files: dist/*
           fail_on_unmatched_files: true
