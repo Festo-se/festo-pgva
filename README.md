@@ -2,8 +2,7 @@
 
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-
-
+[![Build status](https://github.com/Festo-se/festo-pgva/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Festo-se/festo-pgva/actions/workflows/test.yml)
 
 `festo-pgva` is a python package which allows for driver like capabilites and usage over Festo's PGVA-1 device.
 
