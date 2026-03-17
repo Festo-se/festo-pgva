@@ -12,6 +12,23 @@ Examples can be found here: https://github.com/Festo-se/festo-pgva/tree/main/exa
 
 ## Installation
 
+### Release
+
+The lastest released version of this package can be installed from PyPI
+Install using `pip`:
+
+```
+pip install festo-pgva
+```
+or using `uv`
+```
+uv 
+```
+
+```
+uv add festo-pgva
+```
+
 ### From codebase
 
 Identify the relative path to the directory where the code is stored and using pip type in the following command:
@@ -26,18 +43,6 @@ uv add "festo-pgva @ <relative path>"
 
 This will package the library locally and can be used as regular imports
 
-### Release (PENDING)
-
-The lastest released version of this package can be installed from PyPI
-Install using pip:
-
-```
-pip install festo-pgva
-```
-or using `uv`
-```
-uv add festo-pgva
-```
 
 
 ### From Git repository
