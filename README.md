@@ -2,8 +2,7 @@
 
 
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-
-
+[![Build status](https://github.com/Festo-se/festo-pgva/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Festo-se/festo-pgva/actions/workflows/test.yml)
 
 `festo-pgva` is a python package which allows for driver like capabilites and usage over Festo's PGVA-1 device.
 
@@ -12,6 +11,23 @@ Documentation can be found here: https://festo-se.github.io/festo-pgva/
 Examples can be found here: https://github.com/Festo-se/festo-pgva/tree/main/examples
 
 ## Installation
+
+### Release
+
+The lastest released version of this package can be installed from PyPI
+Install using `pip`:
+
+```
+pip install festo-pgva
+```
+or using `uv`
+```
+uv 
+```
+
+```
+uv add festo-pgva
+```
 
 ### From codebase
 
@@ -27,18 +43,6 @@ uv add "festo-pgva @ <relative path>"
 
 This will package the library locally and can be used as regular imports
 
-### Release (PENDING)
-
-The lastest released version of this package can be installed from PyPI
-Install using pip:
-
-```
-pip install festo-pgva
-```
-or using `uv`
-```
-uv add festo-pgva
-```
 
 
 ### From Git repository

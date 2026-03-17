@@ -3,9 +3,21 @@
 from os import getenv
 
 from pgva import PGVA, PGVATCPConfig
-from festo_python_logging import configure_logging
 
-configure_logging(verbose=True, silence=["pymodbus.logging"])
+try:
+    from festo_python_logging import configure_logging
+
+    configure_logging(verbose=True, silence=["pymodbus.logging"])
+except Exception:
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,  # Set minimum level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger("pgva")
+    logger.warning("Festo Logger not in current working environment. Falling back to default")
+
 
 ip = getenv("PGVA_IP", "192.168.0.1")
 
