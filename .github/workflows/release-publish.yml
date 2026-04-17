@@ -38,8 +38,8 @@ jobs:
           ref: ${{ inputs.tag || github.ref_name }}
       - name: Install uv
         uses: astral-sh/setup-uv@v7
-      - name: Install Python 3.13
-        run: uv python install 3.13
+      - name: Install Python 3.14
+        run: uv python install 3.14
       - name: Build
         run: uv build
       - name: Upload | Distribution Artifacts
@@ -106,19 +106,6 @@ jobs:
           name: distribution-artifacts
           path: dist
 
-      # ------------------------------------------------------------------- #
-      # Python Semantic Release is not responsible for publishing your      #
-      # python artifacts to PyPI. Use the official PyPA publish action      #
-      # instead. The following steps are an example but is not guaranteed   #
-      # to work as the action is not maintained by the                      #
-      # python-semantic-release team.                                       #
-      # ------------------------------------------------------------------- #
-
-      # see https://docs.pypi.org/trusted-publishers/
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-      - name: Publish
-        run: uv publish
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
